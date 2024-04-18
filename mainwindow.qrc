@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/gstreamer.png</file>
+    </qresource>
+</RCC>

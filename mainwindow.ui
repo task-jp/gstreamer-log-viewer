@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>GStreamer Log Viewer</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="mainwindow.qrc">
+    <normaloff>:/images/gstreamer.png</normaloff>:/images/gstreamer.png</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>521</width>
+      <height>431</height>
+     </rect>
+    </property>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>Tab 1</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>Tab 2</string>
+     </attribute>
+    </widget>
+   </widget>
+   <widget class="QProgressBar" name="progressBar">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>480</y>
+      <width>118</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="maximum">
+     <number>0</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="counts">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>470</y>
+      <width>90</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Open a log file</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="application">
+    <property name="title">
+     <string>&amp;Application</string>
+    </property>
+    <widget class="QMenu" name="openRecent">
+     <property name="title">
+      <string>Open &amp;Recent</string>
+     </property>
+    </widget>
+    <addaction name="open"/>
+    <addaction name="openRecent"/>
+    <addaction name="reload"/>
+    <addaction name="close"/>
+    <addaction name="separator"/>
+    <addaction name="preferences"/>
+    <addaction name="separator"/>
+    <addaction name="quit"/>
+   </widget>
+   <widget class="QMenu" name="menuAbou_t">
+    <property name="title">
+     <string>Abou&amp;t</string>
+    </property>
+    <addaction name="aboutApp"/>
+    <addaction name="aboutQt"/>
+   </widget>
+   <addaction name="application"/>
+   <addaction name="menuAbou_t"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="open">
+   <property name="icon">
+    <iconset theme="document-open"/>
+   </property>
+   <property name="text">
+    <string>&amp;Open...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="close">
+   <property name="icon">
+    <iconset theme="window-close"/>
+   </property>
+   <property name="text">
+    <string>&amp;Close</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="separator">
+   <property name="text">
+    <string>-</string>
+   </property>
+  </action>
+  <action name="quit">
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::QuitRole</enum>
+   </property>
+  </action>
+  <action name="reload">
+   <property name="icon">
+    <iconset theme="view-refresh"/>
+   </property>
+   <property name="text">
+    <string>&amp;Reload</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="actiona">
+   <property name="text">
+    <string>a</string>
+   </property>
+  </action>
+  <action name="preferences">
+   <property name="text">
+    <string>&amp;Preferences...</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::PreferencesRole</enum>
+   </property>
+  </action>
+  <action name="aboutApp">
+   <property name="text">
+    <string>&amp;GStreamer Log Viewer...</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::AboutRole</enum>
+   </property>
+  </action>
+  <action name="aboutQt">
+   <property name="text">
+    <string>&amp;Qt...</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::AboutQtRole</enum>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="mainwindow.qrc"/>
+ </resources>
+ <connections/>
+</ui>
