@@ -22,6 +22,8 @@ GStreamerLogView::Private::Private(GStreamerLogView *parent)
 {
     settings.beginGroup(q->metaObject()->className());
     q->setTextElideMode(Qt::ElideNone);
+    q->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+
     connect(q->horizontalHeader(), &QHeaderView::sectionDoubleClicked, [this](int logicalIndex) {
         if (logicalIndex == 0)
             return;
