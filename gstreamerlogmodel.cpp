@@ -13,6 +13,8 @@ public:
     QString fileName;
     QList<GStreamerLogLine> lines;
     static const QMetaObject *mo;
+    QMap<int, QColor> processColorMap;
+    QHash<QString, QColor> threadColorMap;
  };
 
 const QMetaObject *GStreamerLogModel::Private::mo = &GStreamerLogLine::staticMetaObject;
@@ -107,8 +109,21 @@ QVariant GStreamerLogModel::data(const QModelIndex &index, int role) const
             ret = foregroundColors.value(line.level);
         break;
     case Qt::BackgroundRole:
-        if (backgroundColors.contains(line.level))
-            ret = backgroundColors.value(line.level);
+        switch (column) {
+        case PidColumn:
+            if (d->processColorMap.contains(line.pid))
+                ret = d->processColorMap.value(line.pid);
+            break;
+        case TidColumn:
+            if (d->threadColorMap.contains(line.tid))
+                ret = d->threadColorMap.value(line.tid);
+            break;
+        default:
+            if (backgroundColors.contains(line.level))
+                ret = backgroundColors.value(line.level);
+            break;
+        }
+
         break;
     case Qt::UserRole:
         ret = line.id;
@@ -162,6 +177,8 @@ void GStreamerLogModel::reload()
                 }
                 mp.writeOnGadget(&logLine, value);
             }
+            d->processColorMap[logLine.pid] = QColor();
+            d->threadColorMap[logLine.tid] = QColor();
             if (d->lines.isEmpty()) {
                 d->lines.append(logLine);
             } else {
@@ -176,6 +193,15 @@ void GStreamerLogModel::reload()
         } else {
             qWarning() << line;
         }
+    }
+
+    const auto pids = d->processColorMap.keys();
+    for (int i = 0; i < pids.count(); i++) {
+        d->processColorMap[pids[i]] = QColor::fromHsvF((qreal)i / pids.count() * 0.4, 1, 1, 0.25);
+    }
+    const auto tids = d->threadColorMap.keys();
+    for (int i = 0; i < tids.count(); i++) {
+        d->threadColorMap[tids[i]] = QColor::fromHsvF((qreal)i / tids.count() * 0.4 + 0.5, 1, 1, 0.25);
     }
     beginInsertRows(QModelIndex(), 0, d->lines.count() - 1);
     endInsertRows();
