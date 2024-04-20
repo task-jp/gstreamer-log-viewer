@@ -45,17 +45,14 @@
        <property name="text">
         <string>&amp;External Text Editor</string>
        </property>
-       <property name="buddy">
-        <cstring>externalTextEditor</cstring>
-       </property>
       </widget>
      </item>
      <item row="1" column="1">
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QLineEdit" name="externalTextEditor">
-         <property name="placeholderText">
-          <string>viewer %f :%l</string>
+        <widget class="QComboBox" name="externalTextEditor">
+         <property name="editable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

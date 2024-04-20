@@ -155,25 +155,22 @@ void GStreamerLogWidget::Private::open(const QString &fileName, int line) const
 {
     QSettings settings;
     settings.beginGroup("Preferences");
-    if (!settings.contains(QStringLiteral("externalTextEditor"))) {
-        emit q->openPreferences(QStringLiteral("externalTextEditor"));
-    }
     if (settings.contains(QStringLiteral("externalTextEditor"))) {
         const auto method = settings.value(QStringLiteral("externalTextEditor")).toString();
-        if (method == QStringLiteral("kate")) {
-            QProcess::startDetached(QStringLiteral("kate"), {fileName, QStringLiteral("-l"), QString::number(line)});
-        } else if (method == QStringLiteral("kdevelop")) {
-            QProcess::startDetached(QStringLiteral("kdevelop"), {fileName, QStringLiteral("+%1").arg(line)});
-        } else if (method == QStringLiteral("qtcreator")) {
-            QProcess::startDetached(QStringLiteral("qtcreator"), {fileName, QStringLiteral(":%1").arg(line)});
-        } else if (!method.isEmpty()) {
+        if (!method.isEmpty()) {
             QString commandline = method;
             commandline.replace(QStringLiteral("%f"), fileName);
             commandline.replace(QStringLiteral("%l"), QString::number(line));
             auto list = QProcess::splitCommand(commandline);
             QProcess::startDetached(list.takeFirst(), list);
         } else {
+#ifdef Q_OS_WIN
+            QProcess::startDetached(QStringLiteral("start"), {fileName});
+#elif defined(Q_OS_MAC)
+            QProcess::startDetached(QStringLiteral("open"), {fileName});
+#elif defined(Q_OS_LINUX)
             QProcess::startDetached(QStringLiteral("xdg-open"), {fileName});
+#endif
         }
     }
 }
