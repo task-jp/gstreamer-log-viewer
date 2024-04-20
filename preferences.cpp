@@ -3,6 +3,8 @@
 
 #include <QtCore/QSettings>
 
+#include <QtWidgets/QFileDialog>
+
 class Preferences::Private : public Ui::Preferences
 {
 public:
@@ -21,7 +23,12 @@ Preferences::Private::Private(::Preferences *parent)
 {
     settings.beginGroup(q->metaObject()->className());
     setupUi(q);
-    toolButton->hide();
+    connect(gstreamerSourceDirectoryButton, &QToolButton::clicked, [this]() {
+        const auto directory = QFileDialog::getExistingDirectory(q, tr("Select GStreamer source directory"), gstreamerSourceDirectory->text());
+        if (directory.isEmpty())
+            return;
+        gstreamerSourceDirectory->setText(directory);
+    });
     gstreamerSourceDirectory->setText(settings.value(QStringLiteral("gstreamerSourceDirectory")).toString());
     externalTextEditor->setText(settings.value(QStringLiteral("externalTextEditor")).toString());
     q->restoreGeometry(settings.value(QStringLiteral("geometry")).toByteArray());
