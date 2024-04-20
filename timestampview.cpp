@@ -38,8 +38,7 @@ TimestampView::TimestampView(QWidget *parent)
             connect(scrollBar, &QScrollBar::valueChanged, this, qOverload<>(&TimestampView::update));
             const auto model = buddy->model();
             if (model) {
-                connect(model, &QAbstractItemModel::rowsInserted, this, qOverload<>(&TimestampView::update));
-                connect(model, &QAbstractItemModel::rowsRemoved, this, qOverload<>(&TimestampView::update));
+                connect(model, &QAbstractItemModel::layoutChanged, this, qOverload<>(&TimestampView::update));
             } else {
                 qFatal("model must be set before setBuddy");
             }
