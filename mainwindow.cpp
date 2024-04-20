@@ -33,13 +33,14 @@ MainWindow::Private::Private(::MainWindow *parent)
     q->setCentralWidget(tabWidget);
     tabWidget->clear();
     connect(tabWidget, &QTabWidget::currentChanged, [this](int index) {
-        if (index == -1)
-            return;
-        auto widget = tabWidget->widget(index);
-        auto tableView = qobject_cast<GStreamerLogWidget *>(widget);
-        if (!tableView)
-            return;
-        counts->setText(QStringLiteral("%1/%2").arg(tableView->filteredCount()).arg(tableView->count()));
+        QString text;
+        if (index >= 0) {
+            auto widget = tabWidget->widget(index);
+            auto tableView = qobject_cast<GStreamerLogWidget *>(widget);
+            if (tableView)
+                text = QStringLiteral("%1/%2").arg(tableView->filteredCount()).arg(tableView->count());
+        }
+        counts->setText(text);
     });
 
     settings.beginGroup(q->metaObject()->className());
