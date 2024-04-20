@@ -18,8 +18,8 @@ See [Running GStreamer Applications](https://gstreamer.freedesktop.org/documenta
 ## Features
 - **Open Log Files**: Easily accessible through the Application menu to open and view logs.
 - **Visual Timeline**: Logs are displayed in a table format with a visual timeline on the left, enhancing the ease of understanding log sequences.
-- **Filtering Options**: Filters can be applied directly in the toolbar, allowing for column-specific filtering using the format `column_name:search_keyword`. Unless column is specified, keywords work for `Message` column
-- **Search Functionality**: Users can search through the logs using the search bar by entering text and pressing enter to filter the logs.
+- **Filtering Options**: Filters can be applied in the filter box when enter key is pressed. Column-specific filtering can be done with the format `column_name:search_keyword`. Unless column is specified, keywords work for `Message` column
+- **Find Functionality**: Users can find word through the logs using the find box by entering text and pressing enter to jump.
 - **Double-click on**:
   - `Timestamp` : open the line in an externally configured text editor
   - `Process`, `Thread`, `Level`, `Category`, `Source`, `Function`, `Object` : add `[column name]:[current value]` to the filter box and apply it
