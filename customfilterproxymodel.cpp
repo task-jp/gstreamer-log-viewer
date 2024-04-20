@@ -11,10 +11,12 @@ class CustomFilterProxyModel::Private
 public:
     Private(CustomFilterProxyModel *parent);
     QModelIndex findNearestTimestamp(int minRow, int maxRow, const Timestamp &timestamp) const;
-    QString filter;
 
 private:
     CustomFilterProxyModel *q;
+public:
+    QString filter;
+    mutable int progress = -1;
 };
 
 CustomFilterProxyModel::Private::Private(CustomFilterProxyModel *parent)
@@ -80,6 +82,19 @@ void CustomFilterProxyModel::setFilter(const QString &filter)
     emit filterChanged(filter);
 }
 
+int CustomFilterProxyModel::progress() const
+{
+    return d->progress;
+}
+
+void CustomFilterProxyModel::setProgress(int progress) const
+{
+    if (d->progress == progress) return;
+    d->progress = progress;
+    auto that = const_cast<CustomFilterProxyModel *>(this);
+    emit that->progressChanged(progress);
+}
+
 QVariant CustomFilterProxyModel::data(const QModelIndex &index, int role) const
 {
     QVariant ret = QSortFilterProxyModel::data(index, role);
@@ -132,16 +147,20 @@ QVariant CustomFilterProxyModel::data(const QModelIndex &index, int role) const
 
 bool CustomFilterProxyModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const
 {
-    if (source_row % 100 == 0)
-        QGuiApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    static int rowCount = 1;
+    if (source_row == 0)
+        rowCount = sourceModel()->rowCount() - 1;
+    setProgress(source_row * 100 / rowCount);
 
     if (!d->filter.isEmpty()) {
         static const auto mo = &GStreamerLogLine::staticMetaObject;
-        const auto properties = mo->propertyCount();
-        QHash<QString, int> name2column;
-        for (int i = 0; i < properties; ++i) {
-            const auto property = mo->property(i);
-            name2column.insert(property.name(), i);
+        static const auto properties = mo->propertyCount();
+        static QHash<QString, int> name2column;
+        if (name2column.isEmpty()) {
+            for (int i = 0; i < properties; ++i) {
+                const auto property = mo->property(i);
+                name2column.insert(property.name(), i);
+            }
         }
         auto filters = d->filter.split(' ', Qt::SkipEmptyParts);
         for (auto i = filters.length() - 1; i >= 0; i--) {
@@ -175,7 +194,6 @@ bool CustomFilterProxyModel::filterAcceptsRow(int source_row, const QModelIndex 
     }
     return true;
 }
-
 
 QModelIndexList CustomFilterProxyModel::match(const QModelIndex &start, int role, const QVariant &value, int hits, Qt::MatchFlags flags) const
 {

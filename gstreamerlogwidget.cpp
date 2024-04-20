@@ -107,6 +107,7 @@ GStreamerLogWidget::Private::Private(const QString &fileName, ::GStreamerLogWidg
         q->setBusy(false);
         q->filteredCountChanged(proxyModel.rowCount());
     });
+    connect(&proxyModel, &CustomFilterProxyModel::progressChanged, q, &::GStreamerLogWidget::progressChanged);
     splitter->restoreState(settings.value(QStringLiteral("splitterState")).toByteArray());
 
     auto shortcut = new QShortcut(QKeySequence(tr("Ctrl+L", "Filter")), q);

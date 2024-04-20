@@ -151,10 +151,20 @@ void MainWindow::Private::openFile(const QString &fileName) {
     QGuiApplication::restoreOverrideCursor();
     connect(tableView, &GStreamerLogWidget::busyChanged, [this](bool busy) {
         progressBar->setVisible(busy);
+        progressBar->setMaximum(100);
         if (busy)
             QGuiApplication::setOverrideCursor(Qt::BusyCursor);
         else
             QGuiApplication::restoreOverrideCursor();
+    });
+    connect(tableView, &GStreamerLogWidget::progressChanged, [this](int progress) {
+        if (progress == 100) {
+            progressBar->setMaximum(0);
+        } else {
+            progressBar->setMaximum(100);
+            progressBar->setValue(progress);
+        }
+        QGuiApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     });
     connect(tableView, &GStreamerLogWidget::openPreferences, [this](const QString &focus) {
         Preferences dialog(q);

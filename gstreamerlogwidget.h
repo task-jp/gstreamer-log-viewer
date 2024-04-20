@@ -23,6 +23,7 @@ public slots:
 
 signals:
     void busyChanged(bool busy);
+    void progressChanged(int progress); // TODO: make property
     void filteredCountChanged(int count);
     void openPreferences(const QString &focus);
     void errorOccurred(const QString &message);
