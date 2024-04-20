@@ -19,7 +19,7 @@
      <item row="0" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>&amp;GStreamer source directory:</string>
+        <string>&amp;GStreamer Source Directory:</string>
        </property>
        <property name="buddy">
         <cstring>gstreamerSourceDirectoryButton</cstring>
@@ -43,7 +43,10 @@
      <item row="1" column="0">
       <widget class="QLabel" name="externalTextEditorLabel">
        <property name="text">
-        <string>&amp;External Text Editor</string>
+        <string>&amp;External Text Editor:</string>
+       </property>
+       <property name="buddy">
+        <cstring>externalTextEditor</cstring>
        </property>
       </widget>
      </item>
