@@ -103,15 +103,11 @@ QVariant GStreamerLogModel::data(const QModelIndex &index, int role) const
             ret = Qt::AlignLeft;
         break;
     case Qt::ForegroundRole:
-        if (column == TimestampColumn && line.gap)
-            ret = QColor(Qt::white);
-        else if (foregroundColors.contains(line.level))
+        if (foregroundColors.contains(line.level))
             ret = foregroundColors.value(line.level);
         break;
     case Qt::BackgroundRole:
-        if (column == TimestampColumn && line.gap)
-            ret = QColor(Qt::red);
-        else if (backgroundColors.contains(line.level))
+        if (backgroundColors.contains(line.level))
             ret = backgroundColors.value(line.level);
         break;
     case Qt::UserRole:
@@ -172,7 +168,6 @@ void GStreamerLogModel::reload()
                 auto timestamp = logLine.timestamp;
                 for (auto i = d->lines.count() - 1; i >= 0; i--) {
                     if (timestamp > d->lines.at(i).timestamp) {
-                        logLine.gap = d->lines.at(i).timestamp.secsTo(timestamp) > 1;
                         d->lines.insert(i + 1, logLine);
                         break;
                     }
