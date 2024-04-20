@@ -23,7 +23,7 @@ Preferences::Private::Private(::Preferences *parent)
     setupUi(q);
     toolButton->hide();
     gstreamerSourceDirectory->setText(settings.value(QStringLiteral("gstreamerSourceDirectory")).toString());
-    sourceOpenMethod->setText(settings.value(QStringLiteral("sourceOpenMethod")).toString());
+    externalTextEditor->setText(settings.value(QStringLiteral("externalTextEditor")).toString());
     q->restoreGeometry(settings.value(QStringLiteral("geometry")).toByteArray());
 }
 
@@ -39,10 +39,17 @@ Preferences::Preferences(QWidget *parent)
 
 Preferences::~Preferences() = default;
 
+void Preferences::setCurrentField(const QString &currentField)
+{
+    QWidget *field = findChild<QWidget *>(currentField);
+    if (!field)
+        return;
+    field->setFocus();
+}
 
 void Preferences::accept()
 {
     d->settings.setValue(QStringLiteral("gstreamerSourceDirectory"), d->gstreamerSourceDirectory->text());
-    d->settings.setValue(QStringLiteral("sourceOpenMethod"), d->sourceOpenMethod->text());
+    d->settings.setValue(QStringLiteral("externalTextEditor"), d->externalTextEditor->text());
     QDialog::accept();
 }

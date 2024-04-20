@@ -9,9 +9,10 @@ class Preferences : public QDialog
 
 public:
     explicit Preferences(QWidget *parent = nullptr);
-    ~Preferences();
+    ~Preferences() override;
 
 public slots:
+    void setCurrentField(const QString &currentField);
     void accept() override;
 
 private:

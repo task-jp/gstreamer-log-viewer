@@ -41,17 +41,17 @@
       </layout>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="sourceOpenMethodLabel">
+      <widget class="QLabel" name="externalTextEditorLabel">
        <property name="text">
-        <string>&amp;Source open method:</string>
+        <string>&amp;External Text Editor</string>
        </property>
        <property name="buddy">
-        <cstring>sourceOpenMethod</cstring>
+        <cstring>externalTextEditor</cstring>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="sourceOpenMethod">
+      <widget class="QLineEdit" name="externalTextEditor">
        <property name="placeholderText">
         <string>viewer %f :%l</string>
        </property>

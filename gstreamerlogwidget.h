@@ -24,7 +24,7 @@ public slots:
 signals:
     void busyChanged(bool busy);
     void filteredCountChanged(int count);
-    void openPreferences();
+    void openPreferences(const QString &focus);
     void errorOccurred(const QString &message);
 
 private:

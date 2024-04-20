@@ -69,7 +69,7 @@ GStreamerLogWidget::Private::Private(const QString &fileName, ::GStreamerLogWidg
         QSettings settings;
         settings.beginGroup("Preferences");
         if (!settings.contains(QStringLiteral("gstreamerSourceDirectory"))) {
-            emit q->openPreferences();
+            emit q->openPreferences(QStringLiteral("gstreamerSourceDirectory"));
         }
         if (settings.contains(QStringLiteral("gstreamerSourceDirectory"))) {
             const auto directory = settings.value(QStringLiteral("gstreamerSourceDirectory")).toString();
@@ -155,8 +155,11 @@ void GStreamerLogWidget::Private::open(const QString &fileName, int line) const
 {
     QSettings settings;
     settings.beginGroup("Preferences");
-    if (settings.contains(QStringLiteral("sourceOpenMethod"))) {
-        const auto method = settings.value(QStringLiteral("sourceOpenMethod")).toString();
+    if (!settings.contains(QStringLiteral("externalTextEditor"))) {
+        emit q->openPreferences(QStringLiteral("externalTextEditor"));
+    }
+    if (settings.contains(QStringLiteral("externalTextEditor"))) {
+        const auto method = settings.value(QStringLiteral("externalTextEditor")).toString();
         if (method == QStringLiteral("kate")) {
             QProcess::startDetached(QStringLiteral("kate"), {fileName, QStringLiteral("-l"), QString::number(line)});
         } else if (method == QStringLiteral("kdevelop")) {

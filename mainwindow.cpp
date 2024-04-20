@@ -132,8 +132,9 @@ void MainWindow::Private::openFile(const QString &fileName) {
         else
             QGuiApplication::restoreOverrideCursor();
     });
-    connect(tableView, &GStreamerLogWidget::openPreferences, [this]() {
+    connect(tableView, &GStreamerLogWidget::openPreferences, [this](const QString &focus) {
         Preferences dialog(q);
+        dialog.setCurrentField(focus);
         dialog.exec();
     });
     connect(tableView, &GStreamerLogWidget::errorOccurred, [this](const QString &message) {
