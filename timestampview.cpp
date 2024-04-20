@@ -63,63 +63,34 @@ void TimestampView::setBuddy(QTableView *buddy)
 
 void TimestampView::mousePressEvent(QMouseEvent *event)
 {
-    const int x = event->position().x();
     const auto y = event->position().y();
-    const auto w = width();
     const auto h = height();
     const auto headerHeight = d->buddy->horizontalHeader()->height();
     const auto count = d->buddy->model()->rowCount();
     if (y < headerHeight)
         return;
-    QModelIndex minIndex;
-    QModelIndex maxIndex;
-    switch (x * 3 / w) {
-    case 0:
-        minIndex = d->buddy->model()->index(0, GStreamerLogModel::TimestampColumn);
-        maxIndex = d->buddy->model()->index(count - 1, GStreamerLogModel::TimestampColumn);
-        break;
-    case 1:
-        return;
-    case 2:
-        minIndex = d->buddy->indexAt(QPoint(0, 0)).siblingAtColumn(GStreamerLogModel::TimestampColumn);
-        maxIndex = d->buddy->indexAt(QPoint(0, h - headerHeight)).siblingAtColumn(GStreamerLogModel::TimestampColumn);
-        break;
-    }
+    QModelIndex minIndex = d->buddy->model()->index(0, GStreamerLogModel::TimestampColumn);
+    QModelIndex maxIndex = d->buddy->model()->index(count - 1, GStreamerLogModel::TimestampColumn);
     const auto minTimestamp = Timestamp::fromString(minIndex.data().toString());
     const auto maxTimestamp = Timestamp::fromString(maxIndex.data().toString());
     const auto mix = Timestamp::mix(minTimestamp, maxTimestamp, (qreal)(y - headerHeight) / (h - headerHeight));
     const auto indices = d->buddy->model()->match(minIndex, Qt::DisplayRole, QVariant::fromValue(mix), 1, Qt::MatchStartsWith); // abuse the flag for nearest timestamp match
     if (!indices.isEmpty()) {
         const auto index = indices.first();
-        d->buddy->setCurrentIndex(index);
         d->buddy->scrollTo(index, QAbstractItemView::PositionAtCenter);
     }
 }
 
 void TimestampView::mouseMoveEvent(QMouseEvent *event)
 {
-    const int x = event->position().x();
     const auto y = event->position().y();
-    const auto w = width();
     const auto h = height();
     const auto headerHeight = d->buddy->horizontalHeader()->height();
     const auto count = d->buddy->model()->rowCount();
     QString text;
     if (y > headerHeight) {
-        QModelIndex minIndex;
-        QModelIndex maxIndex;
-        switch (x * 3 / w) {
-        case 0:
-            minIndex = d->buddy->model()->index(0, GStreamerLogModel::TimestampColumn);
-            maxIndex = d->buddy->model()->index(count - 1, GStreamerLogModel::TimestampColumn);
-            break;
-        case 1:
-            break;
-        case 2:
-            minIndex = d->buddy->indexAt(QPoint(0, 0)).siblingAtColumn(GStreamerLogModel::TimestampColumn);
-            maxIndex = d->buddy->indexAt(QPoint(0, h - headerHeight)).siblingAtColumn(GStreamerLogModel::TimestampColumn);
-            break;
-        }
+        const QModelIndex minIndex = d->buddy->model()->index(0, GStreamerLogModel::TimestampColumn);
+        const QModelIndex maxIndex = d->buddy->model()->index(count - 1, GStreamerLogModel::TimestampColumn);
         if (minIndex.isValid() && maxIndex.isValid()) {
             const auto minTimestamp = Timestamp::fromString(minIndex.data().toString());
             const auto maxTimestamp = Timestamp::fromString(maxIndex.data().toString());
@@ -128,6 +99,9 @@ void TimestampView::mouseMoveEvent(QMouseEvent *event)
         }
     }
     d->label->setText(text);
+    if (event->buttons() & Qt::LeftButton) {
+        mousePressEvent(event);
+    }
 }
 
 void TimestampView::paintEvent(QPaintEvent *event)

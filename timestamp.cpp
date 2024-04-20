@@ -87,19 +87,23 @@ int Timestamp::operator<=>(const Timestamp &other) const
 
 qint64 Timestamp::secsTo(const Timestamp &other) const
 {
-    return d->time.secsTo(other.d->time);
+    const auto secs = d->time.secsTo(other.d->time);
+    const auto msecs = secs * 1000 + (other.d->nsecs - d->nsecs) / 1000000;
+    return (msecs + 0.5) / 1000;
 }
 
 qint64 Timestamp::msecsTo(const Timestamp &other) const
 {
-    auto secs = d->time.secsTo(other.d->time);
-    return secs * 1000 + (other.d->nsecs - d->nsecs) / 1000000;
+    const auto secs = d->time.secsTo(other.d->time);
+    const auto usecs = secs * 1000000 + (other.d->nsecs - d->nsecs) / 1000;
+    return (usecs + 0.5) / 1000;
 }
 
 qint64 Timestamp::usecsTo(const Timestamp &other) const
 {
-    auto secs = d->time.secsTo(other.d->time);
-    return secs * 1000000 + (other.d->nsecs - d->nsecs) / 1000;
+    const auto secs = d->time.secsTo(other.d->time);
+    const auto nsecs = secs * 1000000 + (other.d->nsecs - d->nsecs) / 1000;
+    return (nsecs + 0.5) / 1000;
 }
 
 qint64 Timestamp::nsecsTo(const Timestamp &other) const

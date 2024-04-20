@@ -20,6 +20,7 @@ class GStreamerLogLine
 
 public:
     int id;
+    bool gap = false;
     Timestamp timestamp;
     int pid;
     QString tid;
