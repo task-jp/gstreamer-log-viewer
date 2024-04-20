@@ -4,6 +4,7 @@
 #include "preferences.h"
 
 #include <QtCore/QSettings>
+#include <QtCore/QScopeGuard>
 
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QFileDialog>
@@ -46,7 +47,6 @@ MainWindow::Private::Private(::MainWindow *parent)
     settings.beginGroup(q->metaObject()->className());
     q->restoreGeometry(settings.value(QStringLiteral("geometry")).toByteArray());
     q->restoreState(settings.value(QStringLiteral("state")).toByteArray());
-    const auto recentFiles = settings.value(QStringLiteral("recentFiles")).toStringList();
 
     reload->setEnabled(false);
     close->setEnabled(false);
@@ -66,20 +66,27 @@ MainWindow::Private::Private(::MainWindow *parent)
         openFile(dialog.selectedFiles().first());
     });
 
+    const auto recentFiles = settings.value(QStringLiteral("recentFiles")).toStringList();
     openRecent->setEnabled(!recentFiles.isEmpty());
+    QStringList recentFilesExists;
     for (const auto &file : recentFiles) {
-        const auto action = openRecent->addAction(file);
-        connect(action, &QAction::triggered, [this, file]() {
-            openFile(file);
-        });
-        if (qEnvironmentVariableIsSet("GLV_OPEN_FIRST")) {
-            static bool first = true;
-            if (first) {
-                first= false;
+        if (QFile::exists(file)) {
+            const auto action = openRecent->addAction(file);
+            connect(action, &QAction::triggered, [this, file]() {
                 openFile(file);
+            });
+            if (qEnvironmentVariableIsSet("GLV_OPEN_FIRST")) {
+                static bool first = true;
+                if (first) {
+                    first= false;
+                    openFile(file);
+                }
             }
+            recentFilesExists.append(file);
         }
     }
+    settings.setValue(QStringLiteral("recentFiles"), recentFilesExists);
+
     connect(reload, &QAction::triggered, [this]() {
         static_cast<GStreamerLogWidget *>(tabWidget->currentWidget())->reload();
     });
@@ -116,15 +123,29 @@ MainWindow::Private::~Private()
 }
 
 void MainWindow::Private::openFile(const QString &fileName) {
+    auto recentFiles = settings.value(QStringLiteral("recentFiles")).toStringList();
+    if (recentFiles.contains(fileName))
+        recentFiles.removeAll(fileName);
+    auto cleanup = qScopeGuard([&] {
+        while (recentFiles.count() > 10)
+            recentFiles.removeLast();
+        settings.setValue(QStringLiteral("recentFiles"), recentFiles);
+    });
+
     for (int i = 0; i < tabWidget->count(); ++i) {
         auto tabToolTip = tabWidget->tabToolTip(i);
         if (tabToolTip == fileName) {
             tabWidget->setCurrentIndex(i);
+            recentFiles.prepend(fileName);
             return;
         }
     }
 
     QFileInfo fileInfo(fileName);
+    if (!fileInfo.exists()) {
+        statusbar->showMessage(tr("File does not exist: %1").arg(fileName), 10000);
+        return;
+    }
     QGuiApplication::setOverrideCursor(Qt::BusyCursor);
     auto tableView = new GStreamerLogWidget(fileName);
     QGuiApplication::restoreOverrideCursor();
@@ -153,14 +174,7 @@ void MainWindow::Private::openFile(const QString &fileName) {
     tabWidget->setTabToolTip(index, fileName);
     reload->setEnabled(true);
     close->setEnabled(true);
-
-    auto recentFiles = settings.value(QStringLiteral("recentFiles")).toStringList();
-    if (recentFiles.contains(fileName))
-        recentFiles.removeAll(fileName);
     recentFiles.prepend(fileName);
-    while (recentFiles.count() > 10)
-        recentFiles.removeLast();
-    settings.setValue(QStringLiteral("recentFiles"), recentFiles);
 };
 
 MainWindow::MainWindow(QWidget *parent)
