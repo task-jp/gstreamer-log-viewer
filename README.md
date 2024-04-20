@@ -18,10 +18,13 @@ See [Running GStreamer Applications](https://gstreamer.freedesktop.org/documenta
 ## Features
 - **Open Log Files**: Easily accessible through the Application menu to open and view logs.
 - **Visual Timeline**: Logs are displayed in a table format with a visual timeline on the left, enhancing the ease of understanding log sequences.
-- **Filtering Options**: Filters can be applied directly in the toolbar, allowing for column-specific filtering using the format `column_name:search_keyword`.
+- **Filtering Options**: Filters can be applied directly in the toolbar, allowing for column-specific filtering using the format `column_name:search_keyword`. Unless column is specified, keywords work for `Message` column
 - **Search Functionality**: Users can search through the logs using the search bar by entering text and pressing enter to filter the logs.
-- **External Editor Integration**: Double-click on the 'Timestamp' column data to open it in an externally configured text editor.
-- **Source Code Navigation**: Double-click on the 'Line' column data to jump to the corresponding line in the source code.
+- **Double-click on**:
+  - `Timestamp` : open the line in an externally configured text editor
+  - `Process`, `Thread`, `Level`, `Category`, `Source`, `Function`, `Object` : add `[column name]:[current value]` to the filter box and apply it
+  - `Line` : open the source code and jump to the corresponding line in an externally configured text editor
+  - `Message` : add current message to the filter box and apply it
 
 ## Installation
 To install GStreamer Log Viewer, follow these steps:
@@ -34,8 +37,8 @@ After installation, you can start the application via the executable created in 
 
 ## Configuration and Customization
 Settings for the application can be accessed via `Application > Preferences...` Here, users can configure:
+- **GStreamer Source Directory**: Set the local path to the GStreamer source code for integrated source navigation.
 - **External Text Editor**: Set the path to the external editor for opening log files directly.
-- **GStreamer Source Code Path**: Set the local path to the GStreamer source code for integrated source navigation.
 
 ## Contributing
 Contributions are welcome! Please refer to the GitHub repository to report issues, suggest features, or submit pull requests. Follow the standard GitHub flow for collaborating on projects.
