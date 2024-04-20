@@ -63,12 +63,10 @@ void TimestampView::setBuddy(QTableView *buddy)
 
 void TimestampView::mousePressEvent(QMouseEvent *event)
 {
-    const auto y = event->position().y();
-    const auto h = height();
     const auto headerHeight = d->buddy->horizontalHeader()->height();
+    const auto h = height();
+    const auto y = qBound<qreal>(headerHeight, event->position().y(), h);
     const auto count = d->buddy->model()->rowCount();
-    if (y < headerHeight)
-        return;
     QModelIndex minIndex = d->buddy->model()->index(0, GStreamerLogModel::TimestampColumn);
     QModelIndex maxIndex = d->buddy->model()->index(count - 1, GStreamerLogModel::TimestampColumn);
     const auto minTimestamp = Timestamp::fromString(minIndex.data().toString());
@@ -83,20 +81,18 @@ void TimestampView::mousePressEvent(QMouseEvent *event)
 
 void TimestampView::mouseMoveEvent(QMouseEvent *event)
 {
-    const auto y = event->position().y();
-    const auto h = height();
     const auto headerHeight = d->buddy->horizontalHeader()->height();
+    const auto h = height();
+    const auto y = qBound<qreal>(headerHeight, event->position().y(), h);
     const auto count = d->buddy->model()->rowCount();
     QString text;
-    if (y > headerHeight) {
-        const QModelIndex minIndex = d->buddy->model()->index(0, GStreamerLogModel::TimestampColumn);
-        const QModelIndex maxIndex = d->buddy->model()->index(count - 1, GStreamerLogModel::TimestampColumn);
-        if (minIndex.isValid() && maxIndex.isValid()) {
-            const auto minTimestamp = Timestamp::fromString(minIndex.data().toString());
-            const auto maxTimestamp = Timestamp::fromString(maxIndex.data().toString());
-            const auto mix = Timestamp::mix(minTimestamp, maxTimestamp, (qreal)(y - headerHeight) / (h - headerHeight));
-            text = mix.toString();
-        }
+    const QModelIndex minIndex = d->buddy->model()->index(0, GStreamerLogModel::TimestampColumn);
+    const QModelIndex maxIndex = d->buddy->model()->index(count - 1, GStreamerLogModel::TimestampColumn);
+    if (minIndex.isValid() && maxIndex.isValid()) {
+        const auto minTimestamp = Timestamp::fromString(minIndex.data().toString());
+        const auto maxTimestamp = Timestamp::fromString(maxIndex.data().toString());
+        const auto mix = Timestamp::mix(minTimestamp, maxTimestamp, (qreal)(y - headerHeight) / (h - headerHeight));
+        text = mix.toString();
     }
     d->label->setText(text);
     if (event->buttons() & Qt::LeftButton) {
