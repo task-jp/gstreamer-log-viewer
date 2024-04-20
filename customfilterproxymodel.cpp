@@ -11,16 +11,6 @@ class CustomFilterProxyModel::Private
 public:
     Private(CustomFilterProxyModel *parent);
     QModelIndex findNearestTimestamp(int minRow, int maxRow, const Timestamp &timestamp) const;
-    QString startTimestamp;
-    QString endTimestamp;
-    QIntList pids;
-    QStringList tids;
-    QStringList levels;
-    QStringList categories;
-    QStringList sources;
-    QIntList lines;
-    QStringList functions;
-    QStringList objects;
     QString filter;
 
 private:
@@ -73,140 +63,10 @@ CustomFilterProxyModel::CustomFilterProxyModel(QObject *parent)
     : QSortFilterProxyModel{parent}
     , d{new Private(this)}
 {
-    connect(this, &CustomFilterProxyModel::startTimestampChanged, this, &CustomFilterProxyModel::invalidate);
-    connect(this, &CustomFilterProxyModel::endTimestampChanged, this, &CustomFilterProxyModel::invalidate);
-    connect(this, &CustomFilterProxyModel::pidsChanged, this, &CustomFilterProxyModel::invalidate);
-    connect(this, &CustomFilterProxyModel::tidsChanged, this, &CustomFilterProxyModel::invalidate);
-    connect(this, &CustomFilterProxyModel::levelsChanged, this, &CustomFilterProxyModel::invalidate);
-    connect(this, &CustomFilterProxyModel::categoriesChanged, this, &CustomFilterProxyModel::invalidate);
-    connect(this, &CustomFilterProxyModel::sourcesChanged, this, &CustomFilterProxyModel::invalidate);
-    connect(this, &CustomFilterProxyModel::linesChanged, this, &CustomFilterProxyModel::invalidate);
-    connect(this, &CustomFilterProxyModel::functionsChanged, this, &CustomFilterProxyModel::invalidate);
-    connect(this, &CustomFilterProxyModel::objectsChanged, this, &CustomFilterProxyModel::invalidate);
     connect(this, &CustomFilterProxyModel::filterChanged, this, &CustomFilterProxyModel::invalidate);
 }
 
 CustomFilterProxyModel::~CustomFilterProxyModel() = default;
-
-QString CustomFilterProxyModel::startTimestamp() const
-{
-    return d->startTimestamp;
-}
-
-void CustomFilterProxyModel::setStartTimestamp(const QString &startTimestamp)
-{
-    if (d->startTimestamp == startTimestamp) return;
-    d->startTimestamp = startTimestamp;
-    emit startTimestampChanged(startTimestamp);
-}
-
-QString CustomFilterProxyModel::endTimestamp() const
-{
-    return d->endTimestamp;
-}
-
-void CustomFilterProxyModel::setEndTimestamp(const QString &endTimestamp)
-{
-    if (d->endTimestamp == endTimestamp) return;
-    d->endTimestamp = endTimestamp;
-    emit endTimestampChanged(endTimestamp);
-}
-
-QIntList CustomFilterProxyModel::pids() const
-{
-    return d->pids;
-}
-
-void CustomFilterProxyModel::setPids(const QIntList &pids)
-{
-    if (d->pids == pids) return;
-    d->pids = pids;
-    emit pidsChanged(pids);
-}
-
-QStringList CustomFilterProxyModel::tids() const
-{
-    return d->tids;
-}
-
-void CustomFilterProxyModel::setTids(const QStringList &tids)
-{
-    if (d->tids == tids) return;
-    d->tids = tids;
-    emit tidsChanged(tids);
-}
-
-QStringList CustomFilterProxyModel::levels() const
-{
-    return d->levels;
-}
-
-void CustomFilterProxyModel::setLevels(const QStringList &levels)
-{
-    if (d->levels == levels) return;
-    d->levels = levels;
-    emit levelsChanged(levels);
-}
-
-QStringList CustomFilterProxyModel::categories() const
-{
-    return d->categories;
-}
-
-void CustomFilterProxyModel::setCategories(const QStringList &categories)
-{
-    if (d->categories == categories) return;
-    d->categories = categories;
-    emit categoriesChanged(categories);
-}
-
-QStringList CustomFilterProxyModel::sources() const
-{
-    return d->sources;
-}
-
-void CustomFilterProxyModel::setSources(const QStringList &sources)
-{
-    if (d->sources == sources) return;
-    d->sources = sources;
-    emit sourcesChanged(sources);
-}
-
-QIntList CustomFilterProxyModel::lines() const
-{
-    return d->lines;
-}
-
-void CustomFilterProxyModel::setLines(const QIntList &lines)
-{
-    if (d->lines == lines) return;
-    d->lines = lines;
-    emit linesChanged(lines);
-}
-
-QStringList CustomFilterProxyModel::functions() const
-{
-    return d->functions;
-}
-
-void CustomFilterProxyModel::setFunctions(const QStringList &functions)
-{
-    if (d->functions == functions) return;
-    d->functions = functions;
-    emit functionsChanged(functions);
-}
-
-QStringList CustomFilterProxyModel::objects() const
-{
-    return d->objects;
-}
-
-void CustomFilterProxyModel::setObjects(const QStringList &objects)
-{
-    if (d->objects == objects) return;
-    d->objects = objects;
-    emit objectsChanged(objects);
-}
 
 QString CustomFilterProxyModel::filter() const
 {
@@ -274,15 +134,6 @@ bool CustomFilterProxyModel::filterAcceptsRow(int source_row, const QModelIndex 
 {
     if (source_row % 100 == 0)
         QGuiApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-
-    if (!d->startTimestamp.isEmpty() || !d->endTimestamp.isEmpty()) {
-        const auto text = sourceModel()->index(source_row, GStreamerLogModel::TimestampColumn, source_parent).data().toString();
-        const auto timestamp = Timestamp::fromString(text);
-
-
-        if (!d->startTimestamp.isEmpty() && timestamp < Timestamp::fromString(d->startTimestamp)) return false;
-        if (!d->endTimestamp.isEmpty() && timestamp > Timestamp::fromString(d->endTimestamp)) return false;
-    }
 
     if (!d->filter.isEmpty()) {
         static const auto mo = &GStreamerLogLine::staticMetaObject;
