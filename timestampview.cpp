@@ -110,7 +110,6 @@ void TimestampView::paintEvent(QPaintEvent *event)
     const int w = width() / 3;
     const int headerHeight = d->buddy->horizontalHeader()->height();
     const int h = height();
-    const qreal dy = (qreal)(h - headerHeight) / (count - 1);
 
     auto index2timestamp = [&](int row) -> Timestamp {
         const auto data = model->index(row, GStreamerLogModel::TimestampColumn).data().toString();
