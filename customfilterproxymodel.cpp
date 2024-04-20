@@ -9,6 +9,8 @@
 class CustomFilterProxyModel::Private
 {
 public:
+    Private(CustomFilterProxyModel *parent);
+    QModelIndex findNearestTimestamp(int minRow, int maxRow, const Timestamp &timestamp) const;
     QString startTimestamp;
     QString endTimestamp;
     QIntList pids;
@@ -20,11 +22,56 @@ public:
     QStringList functions;
     QStringList objects;
     QString filter;
+
+private:
+    CustomFilterProxyModel *q;
 };
+
+CustomFilterProxyModel::Private::Private(CustomFilterProxyModel *parent)
+    : q(parent)
+{}
+
+QModelIndex CustomFilterProxyModel::Private::findNearestTimestamp(int minRow, int maxRow, const Timestamp &timestamp) const
+{
+    if (minRow == maxRow) {
+        return q->index(minRow, GStreamerLogModel::TimestampColumn);
+    }
+    if (minRow + 1 == maxRow) {
+        const auto minIndex  =q->index(minRow, GStreamerLogModel::TimestampColumn);
+        const auto maxIndex = q->index(maxRow, GStreamerLogModel::TimestampColumn);
+        const auto minTimestamp = Timestamp::fromString(minIndex.data().toString());
+        const auto maxTimestamp = Timestamp::fromString(maxIndex.data().toString());
+        auto former = minTimestamp.secsTo(timestamp);
+        auto latter = timestamp.secsTo(maxTimestamp);
+        if (former == latter) {
+            former = minTimestamp.msecsTo(timestamp);
+            latter = timestamp.msecsTo(maxTimestamp);
+        }
+        if (former == latter) {
+            former = minTimestamp.usecsTo(timestamp);
+            latter = timestamp.usecsTo(maxTimestamp);
+        }
+        if (former == latter) {
+            former = minTimestamp.nsecsTo(timestamp);
+            latter = timestamp.nsecsTo(maxTimestamp);
+        }
+        return former < latter ? minIndex : maxIndex;
+    }
+
+    const int midRow = minRow + (maxRow - minRow) / 2;
+    const auto midIndex = q->index(midRow, GStreamerLogModel::TimestampColumn);
+    const auto midTimestamp = Timestamp::fromString(midIndex.data().toString());
+    const auto comp = timestamp <=> midTimestamp;
+    if (comp < 0)
+        return findNearestTimestamp(minRow, midRow, timestamp);
+    else if (comp > 0)
+        return findNearestTimestamp(midRow, maxRow, timestamp);
+    return midIndex;
+}
 
 CustomFilterProxyModel::CustomFilterProxyModel(QObject *parent)
     : QSortFilterProxyModel{parent}
-    , d{new Private}
+    , d{new Private(this)}
 {
     connect(this, &CustomFilterProxyModel::startTimestampChanged, this, &CustomFilterProxyModel::invalidate);
     connect(this, &CustomFilterProxyModel::endTimestampChanged, this, &CustomFilterProxyModel::invalidate);
@@ -285,36 +332,34 @@ QModelIndexList CustomFilterProxyModel::match(const QModelIndex &start, int role
     bool wrap = flags & Qt::MatchWrap;
     bool backword = flags & Qt::MatchRecursive; // abuse recursive flag for backwards search
     bool timestampOnly = flags & Qt::MatchStartsWith; // abusing this flag
+    if (timestampOnly) {
+        const auto index = d->findNearestTimestamp(0, rowCount() - 1, value.value<Timestamp>());
+        if (index.isValid())
+            ret << index;
+        return ret;
+    }
 
     auto decrementIndex = [&] (const QModelIndex &index) -> QModelIndex {
         if (!index.isValid())
             return QModelIndex();
-        int nextColumn = GStreamerLogModel::TimestampColumn;
-        if (!timestampOnly) {
-            if (index.column() > 0)
-                return index.sibling(index.row(), index.column() - 1);
-            nextColumn = columnCount(index.parent()) - 1;
-        }
+        if (index.column() > 0)
+            return index.sibling(index.row(), index.column() - 1);
         if (index.row() > 0)
-            return index.sibling(index.row() - 1, nextColumn);
+            return index.sibling(index.row() - 1, columnCount(index.parent()) - 1);
         if (wrap)
-            return index.sibling(rowCount(index.parent()) - 1, nextColumn);
+            return index.sibling(rowCount(index.parent()) - 1, columnCount(index.parent()) - 1);
         return QModelIndex();
     };
 
     auto incrementIndex = [&] (const QModelIndex &index) -> QModelIndex {
         if (!index.isValid())
             return QModelIndex();
-        int nextColumn = GStreamerLogModel::TimestampColumn;
-        if (!timestampOnly) {
-            if (index.column() + 1 < columnCount(index.parent()))
-                return index.sibling(index.row(), index.column() + 1);
-            nextColumn = 0;
-        }
+        if (index.column() + 1 < columnCount(index.parent()))
+            return index.sibling(index.row(), index.column() + 1);
         if (index.row() + 1 < rowCount(index.parent()))
-            return index.sibling(index.row() + 1, nextColumn);
+            return index.sibling(index.row() + 1, 0);
         if (wrap)
-            return index.sibling(0, nextColumn);
+            return index.sibling(0, 0);
         return QModelIndex();
     };
 
@@ -325,45 +370,17 @@ QModelIndexList CustomFilterProxyModel::match(const QModelIndex &start, int role
     auto next = [&](const QModelIndex &index) {
         return (ret.size() < hits || hits == -1) && index.isValid();
     };
-    if (timestampOnly) {
-        QModelIndex index = start.siblingAtColumn(GStreamerLogModel::TimestampColumn);
-        Timestamp timestamp = value.value<Timestamp>();
-        Timestamp lastTimestamp;
-        while (next(index)) {
-            const auto v = index.data(role);
-            const auto currentTimestamp = Timestamp::fromString(v.toString());
-            if (timestamp < currentTimestamp) {
-                auto former = lastTimestamp.secsTo(timestamp);
-                auto latter = timestamp.secsTo(currentTimestamp);
-                if (former == latter) {
-                    former = lastTimestamp.msecsTo(timestamp);
-                    latter = timestamp.msecsTo(currentTimestamp);
-                }
-                if (former == latter) {
-                    former = lastTimestamp.usecsTo(timestamp);
-                    latter = timestamp.usecsTo(currentTimestamp);
-                }
-                if (former == latter) {
-                    former = lastTimestamp.nsecsTo(timestamp);
-                    latter = timestamp.nsecsTo(currentTimestamp);
-                }
-                return { former < latter ? decrementIndex(index) : index };
-            }
-            lastTimestamp = currentTimestamp;
-            index = nextIndex(index);
-        }
-    } else {
-        QModelIndex index = nextIndex(start);
-        if (index == start)
-            return ret;
 
-        QString text = value.toString();
-        while (next(index) && index != start) {
-            const auto v = index.data(role);
-            if (v.toString().contains(text))
-                ret.append(index);
-            index = nextIndex(index);
-        }
+    QModelIndex index = nextIndex(start);
+    if (index == start)
+        return ret;
+
+    QString text = value.toString();
+    while (next(index) && index != start) {
+        const auto v = index.data(role);
+        if (v.toString().contains(text))
+            ret.append(index);
+        index = nextIndex(index);
     }
 
     return ret;
