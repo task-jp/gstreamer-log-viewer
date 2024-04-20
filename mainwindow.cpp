@@ -71,11 +71,13 @@ MainWindow::Private::Private(::MainWindow *parent)
         connect(action, &QAction::triggered, [this, file]() {
             openFile(file);
         });
-        // static bool first = true;
-        // if (first) {
-        //     first= false;
-        //     openFile(file);
-        // }
+        if (qEnvironmentVariableIsSet("GLV_OPEN_FIRST")) {
+            static bool first = true;
+            if (first) {
+                first= false;
+                openFile(file);
+            }
+        }
     }
     connect(reload, &QAction::triggered, [this]() {
         static_cast<GStreamerLogWidget *>(tabWidget->currentWidget())->reload();
