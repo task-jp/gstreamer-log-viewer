@@ -130,6 +130,7 @@ void TimestampView::paintEvent(QPaintEvent *event)
     if (d->cache.timeline.size() != QSize(w, h) || d->cache.rowCount != count) {
         d->cache.timeline = QImage(QSize(w, h), QImage::Format_ARGB32_Premultiplied);
         d->cache.timeline.fill(Qt::transparent);
+        d->cache.rowCount = count;
         QPainter painter(&d->cache.timeline);
         painter.setRenderHint(QPainter::Antialiasing);
 
