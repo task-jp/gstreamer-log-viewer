@@ -18,7 +18,7 @@ public:
 
 public:
     QTime time;
-    qint64 nsecs = 0;
+    qlonglong nsecs = 0;
     mutable QString string;
 };
 
@@ -45,6 +45,25 @@ Timestamp Timestamp::fromString(const QString &text)
 QString Timestamp::toString() const
 {
     return d->string;
+}
+
+Timestamp Timestamp::mix(const Timestamp &a, const Timestamp &b, qreal t)
+{
+    Timestamp ret;
+    ret.d->time = a.d->time.addMSecs(a.msecsTo(b) * t);
+    ret.d->nsecs = a.d->nsecs + (b.d->nsecs - a.d->nsecs) * t;
+    while (ret.d->nsecs < 0) {
+        ret.d->time = ret.d->time.addSecs(-1);
+        ret.d->nsecs += 1000000000;
+    }
+    while (ret.d->nsecs >= 1000000000) {
+        ret.d->time = ret.d->time.addSecs(1);
+        ret.d->nsecs -= 1000000000;
+    }
+    const auto time = ret.d->time.toString("H:mm:ss");
+    const qlonglong nsecs = ret.d->nsecs;
+    ret.d->string = QStringLiteral("%1.%2").arg(time).arg(nsecs, 9, 10, QLatin1Char('0'));
+    return ret;
 }
 
 Timestamp &Timestamp::operator=(const Timestamp &other)

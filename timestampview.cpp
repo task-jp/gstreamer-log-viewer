@@ -4,9 +4,11 @@
 
 #include <QtCore/QTime>
 
+#include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
 
 #include <QtWidgets/QHeaderView>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QScrollBar>
 
 namespace {
@@ -20,6 +22,7 @@ class TimestampView::Private
 {
 public:
     QTableView *buddy = nullptr;
+    QLabel *label;
     Cache cache;
 };
 
@@ -27,6 +30,8 @@ TimestampView::TimestampView(QWidget *parent)
     : QWidget{parent}
     , d(new Private)
 {
+    d->label = new QLabel(this);
+    setMouseTracking(true);
     connect(this, &TimestampView::buddyChanged, [this](QTableView *buddy) {
         if (buddy) {
             auto scrollBar = buddy->verticalScrollBar();
@@ -54,6 +59,75 @@ void TimestampView::setBuddy(QTableView *buddy)
     if (d->buddy == buddy) return;
     d->buddy = buddy;
     emit buddyChanged(buddy);
+}
+
+void TimestampView::mousePressEvent(QMouseEvent *event)
+{
+    const int x = event->position().x();
+    const auto y = event->position().y();
+    const auto w = width();
+    const auto h = height();
+    const auto headerHeight = d->buddy->horizontalHeader()->height();
+    const auto count = d->buddy->model()->rowCount();
+    if (y < headerHeight)
+        return;
+    QModelIndex minIndex;
+    QModelIndex maxIndex;
+    switch (x * 3 / w) {
+    case 0:
+        minIndex = d->buddy->model()->index(0, GStreamerLogModel::TimestampColumn);
+        maxIndex = d->buddy->model()->index(count - 1, GStreamerLogModel::TimestampColumn);
+        break;
+    case 1:
+        return;
+    case 2:
+        minIndex = d->buddy->indexAt(QPoint(0, 0)).siblingAtColumn(GStreamerLogModel::TimestampColumn);
+        maxIndex = d->buddy->indexAt(QPoint(0, h - headerHeight)).siblingAtColumn(GStreamerLogModel::TimestampColumn);
+        break;
+    }
+    const auto minTimestamp = Timestamp::fromString(minIndex.data().toString());
+    const auto maxTimestamp = Timestamp::fromString(maxIndex.data().toString());
+    const auto mix = Timestamp::mix(minTimestamp, maxTimestamp, (qreal)(y - headerHeight) / (h - headerHeight));
+    const auto indices = d->buddy->model()->match(minIndex, Qt::DisplayRole, QVariant::fromValue(mix), 1, Qt::MatchStartsWith); // abuse the flag for nearest timestamp match
+    if (!indices.isEmpty()) {
+        const auto index = indices.first();
+        d->buddy->setCurrentIndex(index);
+        d->buddy->scrollTo(index, QAbstractItemView::PositionAtCenter);
+    }
+}
+
+void TimestampView::mouseMoveEvent(QMouseEvent *event)
+{
+    const int x = event->position().x();
+    const auto y = event->position().y();
+    const auto w = width();
+    const auto h = height();
+    const auto headerHeight = d->buddy->horizontalHeader()->height();
+    const auto count = d->buddy->model()->rowCount();
+    QString text;
+    if (y > headerHeight) {
+        QModelIndex minIndex;
+        QModelIndex maxIndex;
+        switch (x * 3 / w) {
+        case 0:
+            minIndex = d->buddy->model()->index(0, GStreamerLogModel::TimestampColumn);
+            maxIndex = d->buddy->model()->index(count - 1, GStreamerLogModel::TimestampColumn);
+            break;
+        case 1:
+            break;
+        case 2:
+            minIndex = d->buddy->indexAt(QPoint(0, 0)).siblingAtColumn(GStreamerLogModel::TimestampColumn);
+            maxIndex = d->buddy->indexAt(QPoint(0, h - headerHeight)).siblingAtColumn(GStreamerLogModel::TimestampColumn);
+            break;
+        }
+        if (minIndex.isValid() && maxIndex.isValid()) {
+            const auto minTimestamp = Timestamp::fromString(minIndex.data().toString());
+            const auto maxTimestamp = Timestamp::fromString(maxIndex.data().toString());
+            const auto mix = Timestamp::mix(minTimestamp, maxTimestamp, (qreal)(y - headerHeight) / (h - headerHeight));
+            text = mix.toString();
+        }
+    }
+    d->label->setText(text);
 }
 
 void TimestampView::paintEvent(QPaintEvent *event)
@@ -155,5 +229,6 @@ void TimestampView::paintEvent(QPaintEvent *event)
 void TimestampView::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
+    d->label->resize(event->size().width(), d->label->sizeHint().height());
     update();
 }

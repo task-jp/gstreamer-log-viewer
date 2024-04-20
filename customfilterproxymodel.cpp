@@ -282,46 +282,89 @@ bool CustomFilterProxyModel::filterAcceptsRow(int source_row, const QModelIndex 
 QModelIndexList CustomFilterProxyModel::match(const QModelIndex &start, int role, const QVariant &value, int hits, Qt::MatchFlags flags) const
 {
     QModelIndexList ret;
-    QString text = value.toString();
-    auto decrementIndex = [this] (const QModelIndex &index, bool wrap) -> QModelIndex {
+    bool wrap = flags & Qt::MatchWrap;
+    bool backword = flags & Qt::MatchRecursive; // abuse recursive flag for backwards search
+    bool timestampOnly = flags & Qt::MatchStartsWith; // abusing this flag
+
+    auto decrementIndex = [&] (const QModelIndex &index) -> QModelIndex {
         if (!index.isValid())
             return QModelIndex();
-        if (index.column() > 0)
-            return index.sibling(index.row(), index.column() - 1);
+        int nextColumn = GStreamerLogModel::TimestampColumn;
+        if (!timestampOnly) {
+            if (index.column() > 0)
+                return index.sibling(index.row(), index.column() - 1);
+            nextColumn = columnCount(index.parent()) - 1;
+        }
         if (index.row() > 0)
-            return index.sibling(index.row() - 1, columnCount(index.parent()) - 1);
+            return index.sibling(index.row() - 1, nextColumn);
         if (wrap)
-            return index.sibling(rowCount(index.parent()) - 1, columnCount(index.parent()) - 1);
+            return index.sibling(rowCount(index.parent()) - 1, nextColumn);
         return QModelIndex();
     };
 
-    auto incrementIndex = [this] (const QModelIndex &index, bool wrap) -> QModelIndex {
+    auto incrementIndex = [&] (const QModelIndex &index) -> QModelIndex {
         if (!index.isValid())
             return QModelIndex();
-        if (index.column() + 1 < columnCount(index.parent()))
-            return index.sibling(index.row(), index.column() + 1);
+        int nextColumn = GStreamerLogModel::TimestampColumn;
+        if (!timestampOnly) {
+            if (index.column() + 1 < columnCount(index.parent()))
+                return index.sibling(index.row(), index.column() + 1);
+            nextColumn = 0;
+        }
         if (index.row() + 1 < rowCount(index.parent()))
-            return index.sibling(index.row() + 1, 0);
+            return index.sibling(index.row() + 1, nextColumn);
         if (wrap)
-            return index.sibling(0, 0);
+            return index.sibling(0, nextColumn);
         return QModelIndex();
     };
 
-    auto nextIndex = [&](const QModelIndex &index) {
-        bool wrap = flags & Qt::MatchWrap;
-        bool backword = flags & Qt::MatchRecursive; // abuse recursive flag for backwards search
-        return backword ? decrementIndex(index, wrap) : incrementIndex(index, wrap);
+    auto nextIndex = [&](const QModelIndex &index) -> QModelIndex {
+        return backword ? decrementIndex(index) : incrementIndex(index);
     };
 
-    QModelIndex index = nextIndex(start);
-    if (index == start)
-        return ret;
+    auto next = [&](const QModelIndex &index) {
+        return (ret.size() < hits || hits == -1) && index.isValid();
+    };
+    if (timestampOnly) {
+        QModelIndex index = start.siblingAtColumn(GStreamerLogModel::TimestampColumn);
+        Timestamp timestamp = value.value<Timestamp>();
+        Timestamp lastTimestamp;
+        while (next(index)) {
+            const auto v = index.data(role);
+            const auto currentTimestamp = Timestamp::fromString(v.toString());
+            if (timestamp < currentTimestamp) {
+                auto former = lastTimestamp.secsTo(timestamp);
+                auto latter = timestamp.secsTo(currentTimestamp);
+                if (former == latter) {
+                    former = lastTimestamp.msecsTo(timestamp);
+                    latter = timestamp.msecsTo(currentTimestamp);
+                }
+                if (former == latter) {
+                    former = lastTimestamp.usecsTo(timestamp);
+                    latter = timestamp.usecsTo(currentTimestamp);
+                }
+                if (former == latter) {
+                    former = lastTimestamp.nsecsTo(timestamp);
+                    latter = timestamp.nsecsTo(currentTimestamp);
+                }
+                return { former < latter ? decrementIndex(index) : index };
+            }
+            lastTimestamp = currentTimestamp;
+            index = nextIndex(index);
+        }
+    } else {
+        QModelIndex index = nextIndex(start);
+        if (index == start)
+            return ret;
 
-    while ((ret.size() < hits || hits == -1) && index.isValid() && index != start) {
-        const auto v = index.data(role);
-        if (v.toString().contains(text))
-            ret.append(index);
-        index = nextIndex(index);
+        QString text = value.toString();
+        while (next(index) && index != start) {
+            const auto v = index.data(role);
+            if (v.toString().contains(text))
+                ret.append(index);
+            index = nextIndex(index);
+        }
     }
+
     return ret;
 }

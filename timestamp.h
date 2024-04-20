@@ -16,6 +16,8 @@ public:
     static Timestamp fromString(const QString &text);
     QString toString() const;
 
+    static Timestamp mix(const Timestamp &a, const Timestamp &b, qreal t);
+
     Timestamp &operator=(const Timestamp &other);
     int operator<=>(const Timestamp &other) const;
     bool operator==(const Timestamp &other) const;
