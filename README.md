@@ -4,7 +4,7 @@
 GStreamer Log Viewer is a tool designed to efficiently handle the voluminous debug logs produced during GStreamer debugging sessions. It aids in navigating, categorizing, and analyzing the debug information, making the debugging process smoother and quicker. GStreamer's debugging system generates detailed logs that can be overwhelming; this viewer makes it easier to manage and understand these logs.
 
 
-![GStreamer Log Viewer](resources/gstreamer-log-viewer.png)
+![GStreamer Log Viewer](resources/gstreamer-log-viewer.gif)
 
 ## GStreamer debug log
 
