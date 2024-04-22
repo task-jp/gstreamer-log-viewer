@@ -202,7 +202,9 @@ QModelIndexList CustomFilterProxyModel::match(const QModelIndex &start, int role
     bool backword = flags & Qt::MatchRecursive; // abuse recursive flag for backwards search
     bool timestampOnly = flags & Qt::MatchStartsWith; // abusing this flag
     if (timestampOnly) {
-        const auto index = d->findNearestTimestamp(0, rowCount() - 1, value.value<Timestamp>());
+        const auto count = rowCount();
+        if (count == 0) return ret;
+        const auto index = d->findNearestTimestamp(0, count - 1, value.value<Timestamp>());
         if (index.isValid())
             ret << index;
         return ret;
