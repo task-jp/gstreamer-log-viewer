@@ -3,6 +3,7 @@
 #include "timestamp.h"
 
 #include <QtCore/QMetaProperty>
+#include <QtGui/QColor>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QFont>
 
@@ -98,6 +99,41 @@ void CustomFilterProxyModel::setProgress(int progress) const
 QVariant CustomFilterProxyModel::data(const QModelIndex &index, int role) const
 {
     QVariant ret = QSortFilterProxyModel::data(index, role);
+    if (index.column() == GStreamerLogModel::TimestampColumn) {
+        auto hasGap = [&](int a, int b) {
+            const auto previousTimestamp = Timestamp::fromString(index.siblingAtRow(a).data().toString());
+            const auto currentTimestamp = Timestamp::fromString(index.siblingAtRow(b).data().toString());
+            return previousTimestamp.secsTo(currentTimestamp) > 0;
+        };
+        switch (role) {
+        case Qt::BackgroundRole: {
+            const auto row = index.row();
+            if (row > 0) {
+                if (hasGap(row - 1, row)) {
+                    ret = QColor(Qt::red);
+                } else if (row < rowCount() - 1) {
+                    if (hasGap(row, row + 1)) {
+                        ret = QColor(Qt::red);
+                    }
+                }
+            }
+            break; }
+        case Qt::ForegroundRole: {
+            const auto row = index.row();
+            if (row > 0) {
+                if (hasGap(row - 1, row)) {
+                    ret = QColor(Qt::white);
+                } else if (row < rowCount() - 1) {
+                    if (hasGap(row, row + 1)) {
+                        ret = QColor(Qt::white);
+                    }
+                }
+            }
+            break; }
+        default:
+            break;
+        }
+    }
     if (role == Qt::FontRole) {
         if (!d->filter.isEmpty()) {
             static const auto mo = &GStreamerLogLine::staticMetaObject;
