@@ -104,8 +104,10 @@ GStreamerLogWidget::Private::Private(const QString &fileName, ::GStreamerLogWidg
         q->setBusy(true);
     });
     connect(&proxyModel, &CustomFilterProxyModel::layoutChanged, [this]() {
-        q->setBusy(false);
         q->filteredCountChanged(proxyModel.rowCount());
+        QTimer::singleShot(10, [this]() {
+            q->setBusy(false);
+        });
     });
     connect(&proxyModel, &CustomFilterProxyModel::progressChanged, q, &::GStreamerLogWidget::progressChanged);
     splitter->restoreState(settings.value(QStringLiteral("splitterState")).toByteArray());
@@ -115,7 +117,23 @@ GStreamerLogWidget::Private::Private(const QString &fileName, ::GStreamerLogWidg
         filter->setFocus();
     });
     connect(filter, &QLineEdit::returnPressed, [this]() {
+        const int headerHeight = tableView->horizontalHeader()->height();
+        const auto firstIndex = tableView->indexAt(QPoint(0, 0));
+        const auto lastIndex = tableView->indexAt(QPoint(0, tableView->contentsRect().height()));
+        auto currentIndex = tableView->currentIndex();
+        if (currentIndex.row() < firstIndex.row() || lastIndex.row() < currentIndex.row()) {
+            currentIndex = currentIndex.siblingAtRow((firstIndex.row() + lastIndex.row()) / 2);
+        }
+        const auto timestamp = Timestamp::fromString(currentIndex.siblingAtColumn(GStreamerLogModel::TimestampColumn).data().toString());
         proxyModel.setFilter(filter->text());
+        const auto indices = proxyModel.match(QModelIndex(), Qt::DisplayRole, QVariant::fromValue(timestamp), 1, Qt::MatchStartsWith); // abuse the flag for nearest timestamp match
+        if (!indices.isEmpty()) {
+            const auto index = indices.first().siblingAtColumn(currentIndex.column());
+            tableView->setCurrentIndex(index);
+            QTimer::singleShot(10, [this]() {
+                tableView->scrollTo(tableView->currentIndex().siblingAtColumn(GStreamerLogModel::TimestampColumn), QTableView::PositionAtCenter);
+            });
+        }
     });
 
     shortcut = new QShortcut(QKeySequence(tr("Ctrl+F", "Find")), q);
