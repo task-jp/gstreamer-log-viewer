@@ -33,6 +33,13 @@ MainWindow::Private::Private(::MainWindow *parent)
     progressBar->setVisible(false);
     q->setCentralWidget(tabWidget);
     tabWidget->clear();
+    connect(tabWidget, &QTabWidget::tabCloseRequested, [this](int index) {
+        tabWidget->widget(index)->deleteLater();
+        tabWidget->removeTab(index);
+        reload->setEnabled(tabWidget->count() > 0);
+        close->setEnabled(tabWidget->count() > 0);
+    });
+
     connect(tabWidget, &QTabWidget::currentChanged, [this](int index) {
         QString text;
         if (index >= 0) {
