@@ -46,6 +46,7 @@ qt_add_executable(gstreamer-log-viewer
 
     lineedit.h
     lineedit.cpp
+    main.qrc
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

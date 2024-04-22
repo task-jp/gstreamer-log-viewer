@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>README.md</file>
+        <file>resources/gstreamer-log-viewer.gif</file>
+    </qresource>
+</RCC>

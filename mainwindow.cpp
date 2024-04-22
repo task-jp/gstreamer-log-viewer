@@ -6,6 +6,8 @@
 #include <QtCore/QSettings>
 #include <QtCore/QScopeGuard>
 
+#include <QtGui/QDesktopServices>
+
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QProgressBar>
@@ -17,6 +19,7 @@ public:
     ~Private();
 
 private:
+    void tabCountChanged(int index);
     void openFile(const QString &fileName);
 
 private:
@@ -31,13 +34,19 @@ MainWindow::Private::Private(::MainWindow *parent)
     statusbar->addPermanentWidget(progressBar);
     statusbar->addPermanentWidget(counts);
     progressBar->setVisible(false);
-    q->setCentralWidget(tabWidget);
+
+    connect(readme, &QTextBrowser::anchorClicked, [](const QUrl &url) {
+        QDesktopServices::openUrl(url);
+    });
+
+    connect(tabWidget, &QTabWidget::currentChanged, [this](int index) {
+        tabCountChanged(index);
+    });
     tabWidget->clear();
+
     connect(tabWidget, &QTabWidget::tabCloseRequested, [this](int index) {
         tabWidget->widget(index)->deleteLater();
         tabWidget->removeTab(index);
-        reload->setEnabled(tabWidget->count() > 0);
-        close->setEnabled(tabWidget->count() > 0);
     });
 
     connect(tabWidget, &QTabWidget::currentChanged, [this](int index) {
@@ -54,9 +63,6 @@ MainWindow::Private::Private(::MainWindow *parent)
     settings.beginGroup(q->metaObject()->className());
     q->restoreGeometry(settings.value(QStringLiteral("geometry")).toByteArray());
     q->restoreState(settings.value(QStringLiteral("state")).toByteArray());
-
-    reload->setEnabled(false);
-    close->setEnabled(false);
 
     connect(open, &QAction::triggered, [this]() {
         const auto caption = tr("Open GStreamer log file");
@@ -106,8 +112,6 @@ MainWindow::Private::Private(::MainWindow *parent)
     connect(close, &QAction::triggered, [this]() {
         tabWidget->currentWidget()->deleteLater();
         tabWidget->removeTab(tabWidget->currentIndex());
-        reload->setEnabled(tabWidget->count() > 0);
-        close->setEnabled(tabWidget->count() > 0);
     });
 
     connect(quit, &QAction::triggered, q, &QMainWindow::close);
@@ -127,6 +131,14 @@ MainWindow::Private::~Private()
 {
     settings.setValue(QStringLiteral("geometry"), q->saveGeometry());
     settings.setValue(QStringLiteral("state"), q->saveState());
+}
+
+void MainWindow::Private::tabCountChanged(int index) {
+    const bool empty = index < 0;
+    readme->setVisible(empty);
+    reload->setEnabled(!empty);
+    close->setEnabled(!empty);
+    tabWidget->setVisible(!empty);
 }
 
 void MainWindow::Private::openFile(const QString &fileName) {
@@ -189,8 +201,6 @@ void MainWindow::Private::openFile(const QString &fileName) {
     int index = tabWidget->addTab(tableView, fileInfo.fileName());
     tabWidget->setCurrentIndex(index);
     tabWidget->setTabToolTip(index, fileName);
-    reload->setEnabled(true);
-    close->setEnabled(true);
     recentFiles.prepend(fileName);
 };
 
